@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Chat WebSocket</title>
+    <style>
+        body { font-family: Arial, sans-serif; }
+        #messages { border: 1px solid #ccc; padding: 10px; height: 300px; overflow-y: scroll; }
+        input, button { margin-top: 10px; display: block; }
+    </style>
+</head>
+<body>
+    <h2>Chat WebSocket</h2>
+    <div id="messages"></div>
+    <input type="text" id="name" placeholder="Tu nombre">
+    <input type="text" id="message" placeholder="Tu mensaje">
+    <button onclick="sendMessage()">Enviar</button>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script>
+        let socket = new SockJS('/chat');
+        let stompClient = Stomp.over(socket);
+
+        stompClient.connect({}, function(frame) {
+            console.log('Conectado: ' + frame);
+            stompClient.subscribe('/topic/messages', function(response) {
+                let messages = JSON.parse(response.body);
+                document.getElementById('messages').innerHTML = messages.map(msg => `<p>${msg}</p>`).join('');
+            });
+        });
+
+        function sendMessage() {
+            let name = document.getElementById('name').value;
+            let message = document.getElementById('message').value;
+            if (name && message) {
+                stompClient.send("/app/send", {}, name + ": " + message);
+                document.getElementById('message').value = '';
+            }
+        }
+    </script>
+</body>
+</html>
